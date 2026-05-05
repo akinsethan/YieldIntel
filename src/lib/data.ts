@@ -30,12 +30,15 @@ export const NAV_ITEMS = [
   { id: "clients",    label: "Clients",           icon: "◉", children: [
     { id: "clientplanner", label: "Client Planner" },
   ]},
+  { id: "rates",      label: "Rate Database",     icon: "◎", children: [
+    { id: "myga",     label: "MYGA Screener" },
+    { id: "research", label: "FIA / RILA Research" },
+    { id: "compare",  label: "Product Compare" },
+  ]},
   { id: "simulators", label: "Simulators",        icon: "◈", children: [
     { id: "rila", label: "RILA Simulator" },
   ]},
   { id: "products",   label: "Products",          icon: "⊞", children: [] },
   { id: "strategy",   label: "Strategy Builder",  icon: "◇", children: [] },
-  { id: "research",   label: "Market Research",   icon: "◎", children: [] },
-  { id: "compare",    label: "Product Compare",   icon: "⊟", children: [] },
   { id: "settings",   label: "Settings",          icon: "◌", children: [] },
 ];

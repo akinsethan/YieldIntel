@@ -9,19 +9,23 @@ import { DashboardPage } from "@/components/pages/DashboardPage";
 import { ClientPlannerPage } from "@/components/pages/ClientPlannerPage";
 import { RILASimulatorPage } from "@/components/pages/RILASimulatorPage";
 import { MarketResearchPage } from "@/components/pages/MarketResearchPage";
+import { MYGAScreenerPage } from "@/components/pages/MYGAScreenerPage";
 import { ProductComparisonPage } from "@/components/pages/ProductComparisonPage";
 import { SettingsPage } from "@/components/pages/SettingsPage";
 import { PlaceholderPage } from "@/components/pages/PlaceholderPage";
+import { YieldBot } from "@/components/YieldBot";
 
 const PAGE_MAP = {
   dashboard:     () => <DashboardPage />,
   clientplanner: () => <ClientPlannerPage />,
+  myga:          () => <MYGAScreenerPage />,
   rila:          () => <RILASimulatorPage />,
   research:      () => <MarketResearchPage />,
   compare:       () => <ProductComparisonPage />,
   products:      () => <PlaceholderPage title="Products" icon="⊞" description="Browse and manage annuity products. Full product library with filtering, sorting, and detailed product sheets." />,
   strategy:      () => <PlaceholderPage title="Strategy Builder" icon="◇" description="Build and save custom retirement strategies combining multiple products, income sources, and client scenarios." />,
   settings:      () => <SettingsPage />,
+  rates:         () => <MYGAScreenerPage />,
 } as const;
 
 type PageKey = keyof typeof PAGE_MAP;
@@ -82,6 +86,7 @@ export default function App() {
           <ActivePage />
         </div>
       </div>
+      <YieldBot />
     </div>
   );
 }
