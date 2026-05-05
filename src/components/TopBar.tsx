@@ -6,11 +6,12 @@ interface TopBarProps {
   search: string;
   setSearch: (v: string) => void;
   spx: { price: string; change: string } | null;
+  treasury?: { year2?: number; year10?: number } | null;
   notifications: number;
   user: { name: string; role: string } | null;
 }
 
-export function TopBar({ search, setSearch, spx, notifications, user }: TopBarProps) {
+export function TopBar({ search, setSearch, spx, treasury, notifications, user }: TopBarProps) {
   const signOut = () => {
     localStorage.removeItem("yi_user");
     window.location.href = "/login";
@@ -32,14 +33,31 @@ export function TopBar({ search, setSearch, spx, notifications, user }: TopBarPr
 
       <div style={{ flex: 1 }} />
 
-      {/* Live S&P ticker */}
-      <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", background: C.surfaceHi, borderRadius: 8, border: `1px solid ${C.border}` }}>
-        <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.green }} />
-        <span style={{ color: C.textMid, fontSize: 12, fontFamily: "monospace" }}>S&P {spx ? spx.price : "..."}</span>
-        {spx && (
-          <span style={{ color: parseFloat(spx.change) >= 0 ? C.green : C.red, fontSize: 12, fontFamily: "monospace", fontWeight: 700 }}>
-            {parseFloat(spx.change) >= 0 ? "▲" : "▼"}{Math.abs(parseFloat(spx.change))}%
-          </span>
+      {/* Live market tickers */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        {/* S&P */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", background: C.surfaceHi, borderRadius: 8, border: `1px solid ${C.border}` }}>
+          <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.green }} />
+          <span style={{ color: C.textMid, fontSize: 12, fontFamily: "monospace" }}>SPY {spx ? spx.price : "…"}</span>
+          {spx && (
+            <span style={{ color: parseFloat(spx.change) >= 0 ? C.green : C.red, fontSize: 12, fontFamily: "monospace", fontWeight: 700 }}>
+              {parseFloat(spx.change) >= 0 ? "▲" : "▼"}{Math.abs(parseFloat(spx.change))}%
+            </span>
+          )}
+        </div>
+        {/* 2-yr Treasury */}
+        {treasury?.year2 != null && (
+          <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 12px", background: C.surfaceHi, borderRadius: 8, border: `1px solid ${C.border}` }}>
+            <span style={{ color: C.textDim, fontSize: 11, fontFamily: "monospace" }}>2yr</span>
+            <span style={{ color: C.teal, fontSize: 12, fontFamily: "monospace", fontWeight: 700 }}>{treasury.year2.toFixed(2)}%</span>
+          </div>
+        )}
+        {/* 10-yr Treasury */}
+        {treasury?.year10 != null && (
+          <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 12px", background: C.surfaceHi, borderRadius: 8, border: `1px solid ${C.border}` }}>
+            <span style={{ color: C.textDim, fontSize: 11, fontFamily: "monospace" }}>10yr</span>
+            <span style={{ color: C.purple, fontSize: 12, fontFamily: "monospace", fontWeight: 700 }}>{treasury.year10.toFixed(2)}%</span>
+          </div>
         )}
       </div>
 

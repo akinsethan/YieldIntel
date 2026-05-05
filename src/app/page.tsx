@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { C } from "@/lib/tokens";
-import { fetchQuote } from "@/lib/api";
 import { Sidebar } from "@/components/Sidebar";
 import { TopBar } from "@/components/TopBar";
 import { DashboardPage } from "@/components/pages/DashboardPage";
+import type { MarketData } from "@/app/api/market/route";
 import { ClientPlannerPage } from "@/components/pages/ClientPlannerPage";
 import { RILASimulatorPage } from "@/components/pages/RILASimulatorPage";
 import { MarketResearchPage } from "@/components/pages/MarketResearchPage";
@@ -14,8 +14,7 @@ import { ProductComparisonPage } from "@/components/pages/ProductComparisonPage"
 import { SettingsPage } from "@/components/pages/SettingsPage";
 import { PlaceholderPage } from "@/components/pages/PlaceholderPage";
 
-const PAGE_MAP = {
-  dashboard:        () => <DashboardPage />,
+const STATIC_PAGES = {
   clientplanner:    () => <ClientPlannerPage />,
   myga:             () => <MYGAScreenerPage />,
   rila:             () => <RILASimulatorPage />,
@@ -32,18 +31,18 @@ const PAGE_MAP = {
   admin:            () => { if (typeof window !== "undefined") window.location.href = "/admin/rates"; return null; },
 } as const;
 
-type PageKey = keyof typeof PAGE_MAP;
+type PageKey = "dashboard" | keyof typeof STATIC_PAGES;
 
 export default function App() {
   const [page, setPage]           = useState<PageKey>("dashboard");
   const [collapsed, setCollapsed] = useState(false);
   const [expanded, setExpanded]   = useState(["clients", "simulators"]);
   const [search, setSearch]       = useState("");
-  const [spx, setSpx]             = useState<{ price: string; change: string } | null>(null);
+  const [market, setMarket]       = useState<MarketData | null>(null);
   const [user, setUser]           = useState<{ name: string; role: string; email: string } | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
 
-  useEffect(() => { fetchQuote("SPY").then(setSpx); }, []);
+  useEffect(() => { fetch("/api/market").then(r => r.json()).then(setMarket); }, []);
 
   useEffect(() => {
     const stored = localStorage.getItem("yi_user");
@@ -65,7 +64,9 @@ export default function App() {
   }
 
   const sidebarW  = collapsed ? 64 : 230;
-  const ActivePage = PAGE_MAP[page];
+  const ActivePage = page === "dashboard"
+    ? () => <DashboardPage market={market} />
+    : STATIC_PAGES[page as keyof typeof STATIC_PAGES];
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "'Geist','Outfit','Segoe UI',sans-serif" }}>
@@ -82,7 +83,8 @@ export default function App() {
         <TopBar
           search={search}
           setSearch={setSearch}
-          spx={spx}
+          spx={market?.spx ?? null}
+          treasury={market?.treasury ?? null}
           notifications={3}
           user={user}
         />
