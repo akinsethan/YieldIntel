@@ -13,7 +13,6 @@ import { MYGAScreenerPage } from "@/components/pages/MYGAScreenerPage";
 import { ProductComparisonPage } from "@/components/pages/ProductComparisonPage";
 import { SettingsPage } from "@/components/pages/SettingsPage";
 import { PlaceholderPage } from "@/components/pages/PlaceholderPage";
-import { YieldBot } from "@/components/YieldBot";
 
 const PAGE_MAP = {
   dashboard:        () => <DashboardPage />,
@@ -91,7 +90,6 @@ export default function App() {
           <ActivePage />
         </div>
       </div>
-      <YieldBot />
     </div>
   );
 }
