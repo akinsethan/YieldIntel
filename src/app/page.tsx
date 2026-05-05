@@ -16,16 +16,21 @@ import { PlaceholderPage } from "@/components/pages/PlaceholderPage";
 import { YieldBot } from "@/components/YieldBot";
 
 const PAGE_MAP = {
-  dashboard:     () => <DashboardPage />,
-  clientplanner: () => <ClientPlannerPage />,
-  myga:          () => <MYGAScreenerPage />,
-  rila:          () => <RILASimulatorPage />,
-  research:      () => <MarketResearchPage />,
-  compare:       () => <ProductComparisonPage />,
-  products:      () => <PlaceholderPage title="Products" icon="⊞" description="Browse and manage annuity products. Full product library with filtering, sorting, and detailed product sheets." />,
-  strategy:      () => <PlaceholderPage title="Strategy Builder" icon="◇" description="Build and save custom retirement strategies combining multiple products, income sources, and client scenarios." />,
-  settings:      () => <SettingsPage />,
-  rates:         () => <MYGAScreenerPage />,
+  dashboard:        () => <DashboardPage />,
+  clientplanner:    () => <ClientPlannerPage />,
+  myga:             () => <MYGAScreenerPage />,
+  rila:             () => <RILASimulatorPage />,
+  research:         () => <MarketResearchPage />,
+  compare:          () => <ProductComparisonPage />,
+  products:         () => <PlaceholderPage title="Products" icon="⊞" description="Browse and manage annuity products. Full product library with filtering, sorting, and detailed product sheets." />,
+  strategy:         () => <PlaceholderPage title="Strategy Builder" icon="◇" description="Build and save custom retirement strategies combining multiple products, income sources, and client scenarios." />,
+  settings:         () => <SettingsPage />,
+  rates:            () => <MYGAScreenerPage />,
+  liverates:        () => { if (typeof window !== "undefined") window.location.href = "/advisor/rates"; return null; },
+  "admin-carriers": () => { if (typeof window !== "undefined") window.location.href = "/admin/carriers"; return null; },
+  "admin-products": () => { if (typeof window !== "undefined") window.location.href = "/admin/products"; return null; },
+  "admin-rates":    () => { if (typeof window !== "undefined") window.location.href = "/admin/rates"; return null; },
+  admin:            () => { if (typeof window !== "undefined") window.location.href = "/admin/rates"; return null; },
 } as const;
 
 type PageKey = keyof typeof PAGE_MAP;

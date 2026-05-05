@@ -26,19 +26,25 @@ export const MARKET_UPDATES = [
 ];
 
 export const NAV_ITEMS = [
-  { id: "dashboard",  label: "Dashboard",        icon: "▦", children: [] },
-  { id: "clients",    label: "Clients",           icon: "◉", children: [
+  { id: "dashboard",    label: "Dashboard",        icon: "▦", children: [] },
+  { id: "clients",      label: "Clients",           icon: "◉", children: [
     { id: "clientplanner", label: "Client Planner" },
   ]},
-  { id: "rates",      label: "Rate Database",     icon: "◎", children: [
-    { id: "myga",     label: "MYGA Screener" },
-    { id: "research", label: "FIA / RILA Research" },
-    { id: "compare",  label: "Product Compare" },
+  { id: "rates",        label: "Rate Database",     icon: "◎", children: [
+    { id: "liverates",  label: "Live Rate Table" },
+    { id: "myga",       label: "MYGA Screener" },
+    { id: "research",   label: "FIA / RILA Research" },
+    { id: "compare",    label: "Product Compare" },
   ]},
-  { id: "simulators", label: "Simulators",        icon: "◈", children: [
-    { id: "rila", label: "RILA Simulator" },
+  { id: "simulators",   label: "Simulators",        icon: "◈", children: [
+    { id: "rila",       label: "RILA Simulator" },
   ]},
-  { id: "products",   label: "Products",          icon: "⊞", children: [] },
-  { id: "strategy",   label: "Strategy Builder",  icon: "◇", children: [] },
-  { id: "settings",   label: "Settings",          icon: "◌", children: [] },
+  { id: "products",     label: "Products",          icon: "⊞", children: [] },
+  { id: "strategy",     label: "Strategy Builder",  icon: "◇", children: [] },
+  { id: "settings",     label: "Settings",          icon: "◌", children: [] },
+  { id: "admin",        label: "Admin",             icon: "⚙", children: [
+    { id: "admin-carriers", label: "Carriers" },
+    { id: "admin-products", label: "Products" },
+    { id: "admin-rates",    label: "Rate Update" },
+  ]},
 ];
