@@ -21,6 +21,11 @@ export interface Product {
   min_premium: number | null;
   states_available: string[] | null;
   is_active: boolean;
+  bonus: number | null;
+  mva: boolean | null;
+  surrender_schedule: number[] | null;
+  renewal_type: "Declared Rate" | "Indexed Option" | "Par Rate" | null;
+  notes: string | null;
   created_at: string;
   updated_at: string;
   carrier?: Carrier;

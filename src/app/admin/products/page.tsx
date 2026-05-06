@@ -5,7 +5,8 @@ import { C } from "@/lib/tokens";
 import type { Carrier, Product, ProductType } from "@/lib/types";
 
 const PRODUCT_TYPES: ProductType[] = ["FIA", "MYGA", "RILA", "SPIA", "DIA"];
-const emptyForm = { carrier_id: "", name: "", type: "" as ProductType | "", surrender_years: "", min_premium: "", states_available: ["All"] };
+const RENEWAL_TYPES = ["Declared Rate", "Indexed Option", "Par Rate"];
+const emptyForm = { carrier_id: "", name: "", type: "" as ProductType | "", surrender_years: "", min_premium: "", states_available: ["All"], bonus: "", mva: false, surrender_schedule: "", renewal_type: "Declared Rate", notes: "" };
 
 const TYPE_COLORS: Record<string, string> = {
   FIA: C.blue, MYGA: C.teal, RILA: C.purple, SPIA: C.green, DIA: C.amber,
@@ -39,6 +40,11 @@ export default function AdminProductsPage() {
       surrender_years: p.surrender_years != null ? String(p.surrender_years) : "",
       min_premium: p.min_premium != null ? String(p.min_premium) : "",
       states_available: p.states_available ?? ["All"],
+      bonus: p.bonus != null ? String(p.bonus) : "",
+      mva: p.mva ?? false,
+      surrender_schedule: p.surrender_schedule?.join(", ") ?? "",
+      renewal_type: p.renewal_type ?? "Declared Rate",
+      notes: p.notes ?? "",
     });
     setShowForm(true); setError("");
   }
@@ -49,12 +55,19 @@ export default function AdminProductsPage() {
     setSaving(true); setError("");
 
     const body = {
-      carrier_id:      form.carrier_id,
-      name:            form.name,
-      type:            form.type,
-      surrender_years: form.surrender_years ? parseInt(form.surrender_years) : null,
-      min_premium:     form.min_premium     ? parseFloat(form.min_premium)   : null,
-      states_available: form.states_available,
+      carrier_id:        form.carrier_id,
+      name:              form.name,
+      type:              form.type,
+      surrender_years:   form.surrender_years ? parseInt(form.surrender_years) : null,
+      min_premium:       form.min_premium     ? parseFloat(form.min_premium)   : null,
+      states_available:  form.states_available,
+      bonus:             form.bonus           ? parseFloat(form.bonus)         : 0,
+      mva:               form.mva,
+      surrender_schedule: form.surrender_schedule
+        ? form.surrender_schedule.split(",").map(s => parseFloat(s.trim())).filter(n => !isNaN(n))
+        : [],
+      renewal_type:  form.renewal_type || "Declared Rate",
+      notes:         form.notes || null,
     };
 
     const url    = editing ? `/api/products/${editing.id}` : "/api/products";
@@ -164,6 +177,36 @@ export default function AdminProductsPage() {
                   <label style={labelStyle}>MIN PREMIUM ($)</label>
                   <input type="number" min="0" value={form.min_premium} onChange={e => setForm(f => ({ ...f, min_premium: e.target.value }))} style={inputStyle} placeholder="10000" />
                 </div>
+              </div>
+
+              {/* MYGA-specific fields */}
+              {form.type === "MYGA" && (
+                <>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
+                    <div>
+                      <label style={labelStyle}>BONUS %</label>
+                      <input type="number" step="0.01" min="0" value={form.bonus} onChange={e => setForm(f => ({ ...f, bonus: e.target.value }))} style={inputStyle} placeholder="0.00" />
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, paddingTop: 20 }}>
+                      <input type="checkbox" id="mva" checked={form.mva} onChange={e => setForm(f => ({ ...f, mva: e.target.checked }))} style={{ accentColor: C.blue, width: 16, height: 16 }} />
+                      <label htmlFor="mva" style={{ fontSize: 13, color: C.text, cursor: "pointer" }}>Market Value Adjustment (MVA)</label>
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={labelStyle}>SURRENDER SCHEDULE (comma-separated %)</label>
+                    <input value={form.surrender_schedule} onChange={e => setForm(f => ({ ...f, surrender_schedule: e.target.value }))} style={inputStyle} placeholder="e.g. 8, 7, 6, 5, 4" />
+                  </div>
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={labelStyle}>RENEWAL TYPE</label>
+                    <select value={form.renewal_type} onChange={e => setForm(f => ({ ...f, renewal_type: e.target.value }))} style={inputStyle}>
+                      {RENEWAL_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                </>
+              )}
+              <div style={{ marginBottom: 14 }}>
+                <label style={labelStyle}>NOTES</label>
+                <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} style={{ ...inputStyle, height: 72, resize: "vertical" }} placeholder="Optional advisor notes…" />
               </div>
 
               {error && <div style={{ background: C.redDim, color: C.red, borderRadius: 8, padding: "10px 14px", fontSize: 12, marginBottom: 14 }}>{error}</div>}
