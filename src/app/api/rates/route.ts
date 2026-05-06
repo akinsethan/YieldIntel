@@ -5,6 +5,7 @@ import { logAction } from "@/lib/audit";
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const productId = url.searchParams.get("product_id");
+  const indexName = url.searchParams.get("index_name");
   const type      = url.searchParams.get("type");
   const carrier   = url.searchParams.get("carrier");
   const amBest    = url.searchParams.get("am_best");
@@ -32,13 +33,20 @@ export async function GET(req: NextRequest) {
         min_premium,
         states_available,
         buffer_rate,
-        carrier:carriers(id, name, am_best_rating, sp_rating)
+        free_withdrawal_pct,
+        bonus,
+        mva,
+        surrender_schedule,
+        renewal_type,
+        notes,
+        carrier:carriers(id, name, am_best_rating, sp_rating, comdex_score)
       )
     `)
     .order("effective_date", { ascending: false });
 
   if (!history) query = query.eq("is_current", true);
   if (productId) query = query.eq("product_id", productId);
+  if (indexName) query = query.eq("index_name", indexName);
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

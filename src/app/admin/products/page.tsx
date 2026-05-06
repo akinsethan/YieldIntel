@@ -8,7 +8,7 @@ import type { Carrier, Product, ProductType } from "@/lib/types";
 
 const PRODUCT_TYPES: ProductType[] = ["FIA", "MYGA", "RILA", "SPIA", "DIA"];
 const RENEWAL_TYPES = ["Declared Rate", "Indexed Option", "Par Rate"];
-const emptyForm = { carrier_id: "", name: "", type: "" as ProductType | "", surrender_years: "", min_premium: "", states_available: ["All"], bonus: "", mva: false, surrender_schedule: "", renewal_type: "Declared Rate", notes: "", buffer_rate: "" };
+const emptyForm = { carrier_id: "", name: "", type: "" as ProductType | "", surrender_years: "", min_premium: "", states_available: ["All"], bonus: "", mva: false, surrender_schedule: "", renewal_type: "Declared Rate", notes: "", buffer_rate: "", free_withdrawal_pct: "" };
 
 const TYPE_COLORS: Record<string, string> = {
   FIA: C.blue, MYGA: C.teal, RILA: C.purple, SPIA: C.green, DIA: C.amber,
@@ -50,6 +50,7 @@ export default function AdminProductsPage() {
       renewal_type: p.renewal_type ?? "Declared Rate",
       notes: p.notes ?? "",
       buffer_rate: p.buffer_rate != null ? String(p.buffer_rate) : "",
+      free_withdrawal_pct: p.free_withdrawal_pct != null ? String(p.free_withdrawal_pct) : "",
     });
     setShowForm(true); setError("");
   }
@@ -71,9 +72,10 @@ export default function AdminProductsPage() {
       surrender_schedule: form.surrender_schedule
         ? form.surrender_schedule.split(",").map(s => parseFloat(s.trim())).filter(n => !isNaN(n))
         : [],
-      renewal_type:  form.renewal_type || "Declared Rate",
-      notes:         form.notes || null,
-      buffer_rate:   form.buffer_rate ? parseFloat(form.buffer_rate) : 0,
+      renewal_type:         form.renewal_type || "Declared Rate",
+      notes:                form.notes || null,
+      buffer_rate:          form.buffer_rate          ? parseFloat(form.buffer_rate)          : 0,
+      free_withdrawal_pct:  form.free_withdrawal_pct  ? parseFloat(form.free_withdrawal_pct)  : null,
     };
 
     const url    = editing ? `/api/products/${editing.id}` : "/api/products";
@@ -193,6 +195,14 @@ export default function AdminProductsPage() {
                 <div style={{ marginBottom: 14 }}>
                   <label style={labelStyle}>BUFFER RATE (%)</label>
                   <input type="number" step="1" min="0" max="30" value={form.buffer_rate} onChange={e => setForm(f => ({ ...f, buffer_rate: e.target.value }))} style={inputStyle} placeholder="e.g. 10" />
+                </div>
+              )}
+
+              {/* Free withdrawal — shown for MYGA, FIA, RILA */}
+              {(form.type === "MYGA" || form.type === "FIA" || form.type === "RILA") && (
+                <div style={{ marginBottom: 14 }}>
+                  <label style={labelStyle}>FREE WITHDRAWAL (%/YR)</label>
+                  <input type="number" step="0.5" min="0" max="100" value={form.free_withdrawal_pct} onChange={e => setForm(f => ({ ...f, free_withdrawal_pct: e.target.value }))} style={inputStyle} placeholder="e.g. 10" />
                 </div>
               )}
 

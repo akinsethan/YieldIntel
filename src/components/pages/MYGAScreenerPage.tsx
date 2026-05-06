@@ -19,21 +19,23 @@ function defaultSchedule(years: number): number[] {
 }
 
 interface LiveMYGA {
-  rateId:           string;
-  productId:        string;
-  carrier:          string;
-  product:          string;
-  amBest:           string;
-  term:             number;
-  rate:             number;
-  minPremium:       number;
-  bonus:            number;
-  mva:              boolean;
-  surrenderSchedule: number[];
-  renewalType:      string;
-  states:           string[] | null;
-  notes:            string;
-  effectiveDate:    string;
+  rateId:             string;
+  productId:          string;
+  carrier:            string;
+  product:            string;
+  amBest:             string;
+  comdex:             number | null;
+  term:               number;
+  rate:               number;
+  minPremium:         number;
+  bonus:              number;
+  mva:                boolean;
+  freeWithdrawalPct:  number | null;
+  surrenderSchedule:  number[];
+  renewalType:        string;
+  states:             string[] | null;
+  notes:              string;
+  effectiveDate:      string;
 }
 
 function amBestColor(r: string) {
@@ -169,19 +171,21 @@ export function MYGAScreenerPage() {
         const mapped: LiveMYGA[] = (rows as any[]).map(r => ({
           rateId:            r.id,
           productId:         r.product?.id ?? "",
-          carrier:           r.product?.carrier?.name ?? "Unknown",
-          product:           r.product?.name ?? "Unknown",
-          amBest:            r.product?.carrier?.am_best_rating ?? "—",
-          term:              r.product?.surrender_years ?? 0,
-          rate:              r.cap_rate ?? 0,
-          minPremium:        r.product?.min_premium ?? 0,
-          bonus:             r.product?.bonus ?? 0,
-          mva:               r.product?.mva ?? false,
-          surrenderSchedule: r.product?.surrender_schedule ?? [],
-          renewalType:       r.product?.renewal_type ?? "Declared Rate",
-          states:            r.product?.states_available ?? null,
-          notes:             r.product?.notes ?? "",
-          effectiveDate:     r.effective_date ?? "",
+          carrier:            r.product?.carrier?.name ?? "Unknown",
+          product:            r.product?.name ?? "Unknown",
+          amBest:             r.product?.carrier?.am_best_rating ?? "—",
+          comdex:             r.product?.carrier?.comdex_score ?? null,
+          term:               r.product?.surrender_years ?? 0,
+          rate:               r.cap_rate ?? 0,
+          minPremium:         r.product?.min_premium ?? 0,
+          bonus:              r.product?.bonus ?? 0,
+          mva:                r.product?.mva ?? false,
+          freeWithdrawalPct:  r.product?.free_withdrawal_pct ?? null,
+          surrenderSchedule:  r.product?.surrender_schedule ?? [],
+          renewalType:        r.product?.renewal_type ?? "Declared Rate",
+          states:             r.product?.states_available ?? null,
+          notes:              r.product?.notes ?? "",
+          effectiveDate:      r.effective_date ?? "",
         }));
         setProducts(mapped);
       })
@@ -297,6 +301,7 @@ export function MYGAScreenerPage() {
                   <th style={thStyle} onClick={() => handleSort("rate")}>Rate <SortIcon field="rate" sortKey={sortKey} dir={sortDir} /></th>
                   <th style={thStyle} onClick={() => handleSort("bonus")}>Bonus <SortIcon field="bonus" sortKey={sortKey} dir={sortDir} /></th>
                   <th style={thStyle}>MVA</th>
+                  <th style={{ ...thStyle, cursor: "default" }}>Free W/D</th>
                   <th style={thStyle} onClick={() => handleSort("minPremium")}>Min Premium <SortIcon field="minPremium" sortKey={sortKey} dir={sortDir} /></th>
                   <th style={{ ...thStyle, cursor: "default" }}></th>
                 </tr>
@@ -321,6 +326,9 @@ export function MYGAScreenerPage() {
                     <td style={{ padding: "12px 14px" }}>
                       <Pill color={p.mva ? C.amber : C.green}>{p.mva ? "MVA" : "No MVA"}</Pill>
                     </td>
+                    <td style={{ padding: "12px 14px", color: C.textMid, fontFamily: "monospace", fontSize: 12 }}>
+                      {p.freeWithdrawalPct != null ? `${p.freeWithdrawalPct}%/yr` : <span style={{ color: C.textDim }}>—</span>}
+                    </td>
                     <td style={{ padding: "12px 14px", color: C.textMid, fontFamily: "monospace", fontSize: 12 }}>{fmtUSD(p.minPremium)}</td>
                     <td style={{ padding: "12px 14px" }}>
                       <span style={{ color: C.blue, fontSize: 11, fontFamily: "monospace", fontWeight: 700 }}>View →</span>
@@ -328,7 +336,7 @@ export function MYGAScreenerPage() {
                   </tr>
                 ))}
                 {filtered.length === 0 && (
-                  <tr><td colSpan={9} style={{ padding: 40, textAlign: "center", color: C.textDim }}>No products match current filters</td></tr>
+                  <tr><td colSpan={10} style={{ padding: 40, textAlign: "center", color: C.textDim }}>No products match current filters</td></tr>
                 )}
               </tbody>
             </table>

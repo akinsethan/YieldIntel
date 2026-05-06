@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
 import { C } from "@/lib/tokens";
 import { fmtUSD, fmtM, fmt, simulateRILA } from "@/lib/utils";
@@ -11,10 +11,89 @@ import { Input } from "@/components/ui/Input";
 import { RunButton } from "@/components/ui/RunButton";
 import { CustomTooltip } from "@/components/ui/CustomTooltip";
 
+interface RILARate {
+  id: string;
+  index_name: string;
+  cap_rate: number | null;
+  par_rate: number | null;
+  product: {
+    id: string;
+    name: string;
+    surrender_years: number | null;
+    buffer_rate: number | null;
+    carrier: { name: string } | null;
+  } | null;
+}
+
+function ProductSelector({ onSelect }: { onSelect: (params: { cap: number; buffer: number; participation: number; years: number; label: string }) => void }) {
+  const [rates, setRates]   = useState<RILARate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState("");
+
+  useEffect(() => {
+    fetch("/api/rates?type=RILA")
+      .then(r => r.json())
+      .then(data => { setRates(Array.isArray(data) ? data : []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
+  function handleSelect(rateId: string) {
+    setSelected(rateId);
+    const rate = rates.find(r => r.id === rateId);
+    if (!rate) return;
+    const p = rate.product;
+    onSelect({
+      cap:           rate.cap_rate ?? 12,
+      buffer:        p?.buffer_rate ?? 10,
+      participation: rate.par_rate ?? 100,
+      years:         p?.surrender_years ?? 7,
+      label:         `${p?.carrier?.name ?? ""} — ${p?.name ?? ""} (${rate.index_name})`,
+    });
+  }
+
+  if (loading) return <div style={{ fontSize: 12, color: C.textDim, padding: "8px 0" }}>Loading products…</div>;
+  if (rates.length === 0) return (
+    <div style={{ fontSize: 12, color: C.textDim, padding: "8px 0" }}>
+      No RILA products in database.{" "}
+      <a href="/admin/products" style={{ color: C.teal, textDecoration: "none" }}>Add products →</a>
+    </div>
+  );
+
+  return (
+    <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: `1px solid ${C.border}` }}>
+      <Label>LOAD FROM DATABASE</Label>
+      <select
+        value={selected}
+        onChange={e => handleSelect(e.target.value)}
+        style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 10px", fontSize: 12, color: C.text, width: "100%", fontFamily: "inherit", outline: "none", cursor: "pointer" }}
+      >
+        <option value="">— Select a RILA product —</option>
+        {rates.map(r => (
+          <option key={r.id} value={r.id}>
+            {r.product?.carrier?.name ?? "?"} — {r.product?.name ?? "?"} ({r.index_name})
+          </option>
+        ))}
+      </select>
+      {selected && (
+        <div style={{ fontSize: 11, color: C.teal, marginTop: 5, fontWeight: 600 }}>
+          ✓ Parameters loaded from database
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function RILASimulatorPage() {
   const [params, setParams] = useState({ amount: 250000, cap: 12, buffer: 10, participation: 100, meanReturn: 9, volatility: 16, years: 7 });
   const [results, setResults] = useState<ReturnType<typeof simulateRILA> | null>(null);
+  const [loadedLabel, setLoadedLabel] = useState<string | null>(null);
   const set = (k: string) => (v: number) => setParams(p => ({ ...p, [k]: v }));
+
+  function handleProductLoad(loaded: { cap: number; buffer: number; participation: number; years: number; label: string }) {
+    setParams(p => ({ ...p, cap: loaded.cap, buffer: loaded.buffer, participation: loaded.participation, years: loaded.years }));
+    setLoadedLabel(loaded.label);
+    setResults(null);
+  }
 
   return (
     <div>
@@ -27,6 +106,15 @@ export function RILASimulatorPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <Card>
             <SectionTitle>Product Parameters</SectionTitle>
+
+            <ProductSelector onSelect={handleProductLoad} />
+
+            {loadedLabel && (
+              <div style={{ background: C.tealDim, border: `1px solid ${C.teal}30`, borderRadius: 8, padding: "8px 12px", fontSize: 11, color: C.teal, marginBottom: 14, fontWeight: 600 }}>
+                {loadedLabel}
+              </div>
+            )}
+
             {[
               { label: "Investment Amount ($)",  key: "amount",        step: 10000 },
               { label: "Cap Rate (%)",           key: "cap",           step: 0.5, min: 0,  max: 30  },

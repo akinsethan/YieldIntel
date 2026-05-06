@@ -31,6 +31,7 @@ const ADMIN_NAV: NavItem[] = [
   { href: "/admin/carriers", label: "Manage Carriers", icon: "◉" },
   { href: "/admin/products", label: "Manage Products", icon: "⊞" },
   { href: "/admin/import",   label: "Bulk Import",     icon: "↑" },
+  { href: "/admin/stale",    label: "Stale Rates",     icon: "⚠" },
   { href: "/admin/audit",    label: "Audit Log",       icon: "◌" },
 ];
 

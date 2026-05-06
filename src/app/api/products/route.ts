@@ -19,14 +19,14 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { carrier_id, name, type, surrender_years, min_premium, states_available, bonus, mva, surrender_schedule, renewal_type, notes, buffer_rate } = body;
+  const { carrier_id, name, type, surrender_years, min_premium, states_available, bonus, mva, surrender_schedule, renewal_type, notes, buffer_rate, free_withdrawal_pct } = body;
   if (!carrier_id || !name || !type) {
     return NextResponse.json({ error: "carrier_id, name, and type are required" }, { status: 400 });
   }
 
   const { data, error } = await supabaseAdmin
     .from("products")
-    .insert({ carrier_id, name, type, surrender_years, min_premium, states_available, bonus, mva, surrender_schedule, renewal_type, notes, buffer_rate })
+    .insert({ carrier_id, name, type, surrender_years, min_premium, states_available, bonus, mva, surrender_schedule, renewal_type, notes, buffer_rate, free_withdrawal_pct })
     .select()
     .single();
 

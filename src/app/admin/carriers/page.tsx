@@ -8,7 +8,7 @@ import type { Carrier } from "@/lib/types";
 
 const AM_BEST   = ["A++", "A+", "A", "A-", "B++", "B+", "B", "B-"];
 const US_STATES = ["All","AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"];
-const emptyForm = { name: "", am_best_rating: "", sp_rating: "", moodys_rating: "", states_available: ["All"] };
+const emptyForm = { name: "", am_best_rating: "", sp_rating: "", moodys_rating: "", comdex_score: "", states_available: ["All"] };
 
 export default function AdminCarriersPage() {
   const { toast } = useAdminToast();
@@ -26,7 +26,7 @@ export default function AdminCarriersPage() {
   function openNew() { setEditing(null); setForm(emptyForm); setShowForm(true); setError(""); }
   function openEdit(c: Carrier) {
     setEditing(c);
-    setForm({ name: c.name, am_best_rating: c.am_best_rating ?? "", sp_rating: c.sp_rating ?? "", moodys_rating: c.moodys_rating ?? "", states_available: c.states_available ?? ["All"] });
+    setForm({ name: c.name, am_best_rating: c.am_best_rating ?? "", sp_rating: c.sp_rating ?? "", moodys_rating: c.moodys_rating ?? "", comdex_score: c.comdex_score != null ? String(c.comdex_score) : "", states_available: c.states_available ?? ["All"] });
     setShowForm(true); setError("");
   }
 
@@ -34,7 +34,7 @@ export default function AdminCarriersPage() {
     e.preventDefault();
     if (!form.name.trim()) { setError("Carrier name is required."); return; }
     setSaving(true); setError("");
-    const body   = { ...form, states_available: form.states_available.length ? form.states_available : ["All"] };
+    const body   = { ...form, states_available: form.states_available.length ? form.states_available : ["All"], comdex_score: form.comdex_score ? parseInt(form.comdex_score) : null };
     const url    = editing ? `/api/carriers/${editing.id}` : "/api/carriers";
     const method = editing ? "PATCH" : "POST";
     const res    = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -72,7 +72,7 @@ export default function AdminCarriersPage() {
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
             <tr style={{ borderBottom: `1px solid ${C.border}`, background: C.surfaceHi }}>
-              {["Carrier", "AM Best", "S&P", "Moody's", "States", ""].map(h => (
+              {["Carrier", "AM Best", "S&P", "Moody's", "Comdex", "States", ""].map(h => (
                 <th key={h} style={{ padding: "10px 16px", textAlign: "left", color: C.textDim, fontWeight: 600 }}>{h}</th>
               ))}
             </tr>
@@ -93,6 +93,11 @@ export default function AdminCarriersPage() {
                 </td>
                 <td style={{ padding: "12px 16px", color: C.textMid, fontSize: 12 }}>{c.sp_rating ?? "—"}</td>
                 <td style={{ padding: "12px 16px", color: C.textMid, fontSize: 12 }}>{c.moodys_rating ?? "—"}</td>
+                <td style={{ padding: "12px 16px", color: C.textMid, fontSize: 12, fontFamily: "monospace" }}>
+                  {c.comdex_score != null ? (
+                    <span style={{ background: c.comdex_score >= 90 ? C.greenDim : c.comdex_score >= 75 ? C.amberDim : C.redDim, color: c.comdex_score >= 90 ? C.green : c.comdex_score >= 75 ? C.amber : C.red, borderRadius: 5, padding: "2px 7px", fontSize: 11, fontWeight: 700 }}>{c.comdex_score}</span>
+                  ) : "—"}
+                </td>
                 <td style={{ padding: "12px 16px", color: C.textMid, fontSize: 12 }}>
                   {c.states_available?.includes("All") ? "All states" : (c.states_available?.length ?? 0) + " states"}
                 </td>
@@ -116,7 +121,7 @@ export default function AdminCarriersPage() {
                 <label style={labelStyle}>CARRIER NAME *</label>
                 <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} style={inputStyle} required />
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 14 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12, marginBottom: 14 }}>
                 <div>
                   <label style={labelStyle}>AM BEST</label>
                   <select value={form.am_best_rating} onChange={e => setForm(f => ({ ...f, am_best_rating: e.target.value }))} style={inputStyle}>
@@ -131,6 +136,10 @@ export default function AdminCarriersPage() {
                 <div>
                   <label style={labelStyle}>MOODY&apos;S</label>
                   <input value={form.moodys_rating} onChange={e => setForm(f => ({ ...f, moodys_rating: e.target.value }))} style={inputStyle} placeholder="e.g. Aa2" />
+                </div>
+                <div>
+                  <label style={labelStyle}>COMDEX (0–100)</label>
+                  <input type="number" min={0} max={100} value={form.comdex_score} onChange={e => setForm(f => ({ ...f, comdex_score: e.target.value }))} style={inputStyle} placeholder="e.g. 92" />
                 </div>
               </div>
               <div style={{ marginBottom: 22 }}>

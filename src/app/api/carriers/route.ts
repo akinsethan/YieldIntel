@@ -14,12 +14,12 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { name, am_best_rating, sp_rating, moodys_rating, states_available } = body;
+  const { name, am_best_rating, sp_rating, moodys_rating, states_available, comdex_score } = body;
   if (!name) return NextResponse.json({ error: "name is required" }, { status: 400 });
 
   const { data, error } = await supabaseAdmin
     .from("carriers")
-    .insert({ name, am_best_rating, sp_rating, moodys_rating, states_available })
+    .insert({ name, am_best_rating, sp_rating, moodys_rating, states_available, comdex_score })
     .select()
     .single();
 

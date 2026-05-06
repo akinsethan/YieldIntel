@@ -6,6 +6,7 @@ export interface Carrier {
   am_best_rating: string | null;
   sp_rating: string | null;
   moodys_rating: string | null;
+  comdex_score: number | null;
   states_available: string[] | null;
   is_active: boolean;
   created_at: string;
@@ -27,6 +28,7 @@ export interface Product {
   renewal_type: "Declared Rate" | "Indexed Option" | "Par Rate" | null;
   notes: string | null;
   buffer_rate: number | null;
+  free_withdrawal_pct: number | null;
   created_at: string;
   updated_at: string;
   carrier?: Carrier;

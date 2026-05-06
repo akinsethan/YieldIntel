@@ -1,8 +1,61 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { C } from "@/lib/tokens";
 import type { Rate, Carrier, Product, ProductType } from "@/lib/types";
+
+interface HistoryPoint {
+  id: string;
+  cap_rate: number | null;
+  par_rate: number | null;
+  spread: number | null;
+  effective_date: string;
+  is_current: boolean;
+}
+
+function HistoryChart({ productId, indexName }: { productId: string; indexName: string }) {
+  const [data, setData]       = useState<HistoryPoint[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/rates/history?product_id=${encodeURIComponent(productId)}&index_name=${encodeURIComponent(indexName)}`)
+      .then(r => r.json())
+      .then(d => { setData(Array.isArray(d) ? d : []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [productId, indexName]);
+
+  if (loading) return <div style={{ padding: "20px 0", color: C.textDim, fontSize: 12 }}>Loading history…</div>;
+  if (data.length < 2) return (
+    <div style={{ padding: "20px 0", color: C.textDim, fontSize: 12 }}>
+      {data.length === 1 ? "Only 1 data point — no trend to display yet." : "No history found."}
+    </div>
+  );
+
+  const chartData = data.map(d => ({
+    date: new Date(d.effective_date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    cap:  d.cap_rate,
+    par:  d.par_rate,
+    spread: d.spread,
+  }));
+
+  return (
+    <div style={{ height: 200 }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
+          <XAxis dataKey="date" tick={{ fontSize: 10, fill: C.textDim }} />
+          <YAxis tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 10, fill: C.textDim }} domain={["auto", "auto"]} />
+          <Tooltip formatter={(v) => `${(v as number)?.toFixed(2)}%`} contentStyle={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 11 }} />
+          <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
+          {data.some(d => d.cap_rate != null) && <Line type="monotone" dataKey="cap" name="Cap Rate" stroke={C.teal} dot={{ r: 3 }} strokeWidth={2} connectNulls />}
+          {data.some(d => d.par_rate != null) && <Line type="monotone" dataKey="par" name="Par Rate" stroke={C.blue} dot={{ r: 3 }} strokeWidth={2} connectNulls />}
+          {data.some(d => d.spread != null)   && <Line type="monotone" dataKey="spread" name="Spread" stroke={C.amber} dot={{ r: 3 }} strokeWidth={2} connectNulls />}
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
 
 const PRODUCT_TYPES: ProductType[] = ["FIA", "MYGA", "RILA", "SPIA", "DIA"];
 const AM_BEST_OPTS = ["A++", "A+", "A", "A-", "B++", "B+"];
@@ -81,6 +134,7 @@ export function RateDatabasePage() {
   const [filterCarrier,   setFilterCarrier]   = useState("");
   const [filterAmBest,    setFilterAmBest]    = useState("");
   const [filterSurrender, setFilterSurrender] = useState("");
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -227,14 +281,15 @@ export function RateDatabasePage() {
                   </th>
                 ))}
                 <th style={{ ...thStyle("updated"), cursor: "default" }}>Updated By</th>
+                <th style={{ ...thStyle("updated"), cursor: "default" }}></th>
               </tr>
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan={10} style={{ padding: 60, textAlign: "center", color: C.textDim }}>Loading rates…</td></tr>
+                <tr><td colSpan={11} style={{ padding: 60, textAlign: "center", color: C.textDim }}>Loading rates…</td></tr>
               )}
               {!loading && sorted.length === 0 && (
-                <tr><td colSpan={10} style={{ padding: 60, textAlign: "center" }}>
+                <tr><td colSpan={11} style={{ padding: 60, textAlign: "center" }}>
                   <div style={{ color: C.textDim, marginBottom: 8 }}>
                     {rates.length === 0 ? "No rates in the database yet." : "No rates match your filters."}
                   </div>
@@ -248,52 +303,81 @@ export function RateDatabasePage() {
               {sorted.map(r => {
                 const p = r.product as (Product & { carrier?: Carrier }) | undefined;
                 const fresh = freshnessTag(r.effective_date);
+                const rowKey = `${(p as Product & { id?: string })?.id ?? ""}|${r.index_name}`;
+                const isOpen = expanded === rowKey;
                 return (
-                  <tr key={r.id} style={{ borderBottom: `1px solid ${C.border}` }}
-                    onMouseEnter={e => (e.currentTarget.style.background = C.surfaceHi)}
-                    onMouseLeave={e => (e.currentTarget.style.background = "")}>
-                    <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
-                      <div style={{ fontWeight: 600, color: C.text }}>{p?.carrier?.name ?? "—"}</div>
-                      {p?.carrier?.am_best_rating && (
-                        <div style={{ fontSize: 11, color: C.green, fontWeight: 700, marginTop: 1 }}>{p.carrier.am_best_rating}</div>
-                      )}
-                    </td>
-                    <td style={{ padding: "12px 14px" }}>
-                      <div style={{ color: C.text }}>{p?.name ?? "—"}</div>
-                      <div style={{ fontSize: 11, color: C.textDim, marginTop: 1 }}>{r.index_name}</div>
-                    </td>
-                    <td style={{ padding: "12px 14px" }}>
-                      <span style={{ background: (TYPE_COLORS[p?.type ?? ""] ?? C.border) + "22", color: TYPE_COLORS[p?.type ?? ""] ?? C.textDim, borderRadius: 5, padding: "2px 8px", fontSize: 11, fontWeight: 700 }}>
-                        {p?.type ?? "—"}
-                      </span>
-                    </td>
-                    <td style={{ padding: "12px 14px", color: C.textMid, textAlign: "center", fontFamily: "var(--font-mono)" }}>
-                      {p?.surrender_years != null ? `${p.surrender_years} yr` : "—"}
-                    </td>
-                    <td style={{ padding: "12px 14px", fontFamily: "var(--font-mono)", fontWeight: 700, color: r.cap_rate ? C.navy : C.textDim, textAlign: "right", whiteSpace: "nowrap" }}>
-                      {fmt(r.cap_rate)}
-                      <DeltaBadge current={r.cap_rate} previous={r.prev_cap_rate} label="cap" />
-                    </td>
-                    <td style={{ padding: "12px 14px", fontFamily: "var(--font-mono)", fontWeight: 700, color: r.par_rate ? C.navy : C.textDim, textAlign: "right", whiteSpace: "nowrap" }}>
-                      {fmt(r.par_rate)}
-                      <DeltaBadge current={r.par_rate} previous={r.prev_par_rate} label="par" />
-                    </td>
-                    <td style={{ padding: "12px 14px", fontFamily: "var(--font-mono)", color: r.spread ? C.navy : C.textDim, textAlign: "right" }}>
-                      {fmt(r.spread)}
-                    </td>
-                    <td style={{ padding: "12px 14px", fontFamily: "var(--font-mono)", color: C.textMid, fontSize: 12, textAlign: "right" }}>
-                      {fmtPremium(p?.min_premium ?? null)}
-                    </td>
-                    <td style={{ padding: "12px 14px", textAlign: "right" }}>
-                      <span style={{ background: fresh.bg, color: fresh.color, borderRadius: 5, padding: "3px 8px", fontSize: 11, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }}>
-                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: fresh.dot, display: "inline-block" }} />
-                        {fresh.label}
-                      </span>
-                    </td>
-                    <td style={{ padding: "12px 14px", color: C.textDim, fontSize: 11 }}>
-                      {r.updated_by ?? "—"}
-                    </td>
-                  </tr>
+                  <>
+                    <tr key={r.id} style={{ borderBottom: isOpen ? "none" : `1px solid ${C.border}` }}
+                      onMouseEnter={e => (e.currentTarget.style.background = C.surfaceHi)}
+                      onMouseLeave={e => (e.currentTarget.style.background = "")}>
+                      <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                        <div style={{ fontWeight: 600, color: C.text }}>{p?.carrier?.name ?? "—"}</div>
+                        <div style={{ display: "flex", gap: 4, marginTop: 2, flexWrap: "wrap" }}>
+                          {p?.carrier?.am_best_rating && (
+                            <span style={{ fontSize: 10, color: C.green, fontWeight: 700 }}>{p.carrier.am_best_rating}</span>
+                          )}
+                          {p?.carrier && (p.carrier as unknown as { comdex_score?: number | null }).comdex_score != null && (
+                            <span style={{ fontSize: 10, color: C.blue, fontWeight: 700, fontFamily: "monospace" }}>
+                              CDX {(p.carrier as unknown as { comdex_score: number }).comdex_score}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td style={{ padding: "12px 14px" }}>
+                        <div style={{ color: C.text }}>{p?.name ?? "—"}</div>
+                        <div style={{ fontSize: 11, color: C.textDim, marginTop: 1 }}>{r.index_name}</div>
+                      </td>
+                      <td style={{ padding: "12px 14px" }}>
+                        <span style={{ background: (TYPE_COLORS[p?.type ?? ""] ?? C.border) + "22", color: TYPE_COLORS[p?.type ?? ""] ?? C.textDim, borderRadius: 5, padding: "2px 8px", fontSize: 11, fontWeight: 700 }}>
+                          {p?.type ?? "—"}
+                        </span>
+                      </td>
+                      <td style={{ padding: "12px 14px", color: C.textMid, textAlign: "center", fontFamily: "var(--font-mono)" }}>
+                        {p?.surrender_years != null ? `${p.surrender_years} yr` : "—"}
+                      </td>
+                      <td style={{ padding: "12px 14px", fontFamily: "var(--font-mono)", fontWeight: 700, color: r.cap_rate ? C.navy : C.textDim, textAlign: "right", whiteSpace: "nowrap" }}>
+                        {fmt(r.cap_rate)}
+                        <DeltaBadge current={r.cap_rate} previous={r.prev_cap_rate} label="cap" />
+                      </td>
+                      <td style={{ padding: "12px 14px", fontFamily: "var(--font-mono)", fontWeight: 700, color: r.par_rate ? C.navy : C.textDim, textAlign: "right", whiteSpace: "nowrap" }}>
+                        {fmt(r.par_rate)}
+                        <DeltaBadge current={r.par_rate} previous={r.prev_par_rate} label="par" />
+                      </td>
+                      <td style={{ padding: "12px 14px", fontFamily: "var(--font-mono)", color: r.spread ? C.navy : C.textDim, textAlign: "right" }}>
+                        {fmt(r.spread)}
+                      </td>
+                      <td style={{ padding: "12px 14px", fontFamily: "var(--font-mono)", color: C.textMid, fontSize: 12, textAlign: "right" }}>
+                        {fmtPremium(p?.min_premium ?? null)}
+                      </td>
+                      <td style={{ padding: "12px 14px", textAlign: "right" }}>
+                        <span style={{ background: fresh.bg, color: fresh.color, borderRadius: 5, padding: "3px 8px", fontSize: 11, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                          <span style={{ width: 6, height: 6, borderRadius: "50%", background: fresh.dot, display: "inline-block" }} />
+                          {fresh.label}
+                        </span>
+                      </td>
+                      <td style={{ padding: "12px 14px", color: C.textDim, fontSize: 11 }}>
+                        {r.updated_by ?? "—"}
+                      </td>
+                      <td style={{ padding: "12px 14px", textAlign: "right" }}>
+                        <button
+                          onClick={() => setExpanded(isOpen ? null : rowKey)}
+                          style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 6, padding: "3px 10px", fontSize: 11, color: isOpen ? C.teal : C.textDim, cursor: "pointer", whiteSpace: "nowrap" }}
+                        >
+                          {isOpen ? "▲ Hide" : "▼ History"}
+                        </button>
+                      </td>
+                    </tr>
+                    {isOpen && (p as Product & { id?: string })?.id && (
+                      <tr key={`${r.id}-history`} style={{ borderBottom: `1px solid ${C.border}`, background: C.surfaceHi }}>
+                        <td colSpan={11} style={{ padding: "16px 20px" }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: C.textDim, letterSpacing: "0.06em", marginBottom: 10 }}>
+                            RATE HISTORY — {p?.name} · {r.index_name}
+                          </div>
+                          <HistoryChart productId={(p as Product & { id?: string })!.id!} indexName={r.index_name} />
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 );
               })}
             </tbody>
