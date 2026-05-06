@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { C } from "@/lib/tokens";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { useAdminToast } from "@/components/ui/AdminToast";
 import type { Carrier, Product, ProductType } from "@/lib/types";
 
 const PRODUCT_TYPES: ProductType[] = ["FIA", "MYGA", "RILA", "SPIA", "DIA"];
@@ -13,14 +15,16 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 export default function AdminProductsPage() {
-  const [products, setProducts]   = useState<Product[]>([]);
-  const [carriers, setCarriers]   = useState<Carrier[]>([]);
-  const [editing, setEditing]     = useState<Product | null>(null);
-  const [form, setForm]           = useState(emptyForm);
-  const [showForm, setShowForm]   = useState(false);
-  const [saving, setSaving]       = useState(false);
-  const [error, setError]         = useState("");
+  const { toast } = useAdminToast();
+  const [products, setProducts]           = useState<Product[]>([]);
+  const [carriers, setCarriers]           = useState<Carrier[]>([]);
+  const [editing, setEditing]             = useState<Product | null>(null);
+  const [form, setForm]                   = useState(emptyForm);
+  const [showForm, setShowForm]           = useState(false);
+  const [saving, setSaving]               = useState(false);
+  const [error, setError]                 = useState("");
   const [filterCarrier, setFilterCarrier] = useState("");
+  const [confirmTarget, setConfirmTarget] = useState<Product | null>(null);
 
   const load = () =>
     fetch("/api/products").then(r => r.json()).then(setProducts);
@@ -77,13 +81,16 @@ export default function AdminProductsPage() {
     const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const data = await res.json();
     setSaving(false);
-    if (!res.ok) { setError(data.error ?? "Save failed"); return; }
-    setShowForm(false); load();
+    if (!res.ok) { setError(data.error ?? "Save failed"); toast(data.error ?? "Save failed", "error"); return; }
+    setShowForm(false);
+    toast(editing ? `Product updated — ${form.name}` : `Product added — ${form.name}`);
+    load();
   }
 
   async function handleDelete(p: Product) {
-    if (!confirm(`Archive product "${p.name}"?`)) return;
     await fetch(`/api/products/${p.id}`, { method: "DELETE" });
+    setConfirmTarget(null);
+    toast(`Product archived — ${p.name}`);
     load();
   }
 
@@ -138,7 +145,7 @@ export default function AdminProductsPage() {
                 </td>
                 <td style={{ padding: "11px 16px", textAlign: "right" }}>
                   <button onClick={() => openEdit(p)} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 6, padding: "5px 12px", fontSize: 12, color: C.textMid, cursor: "pointer", marginRight: 6 }}>Edit</button>
-                  <button onClick={() => handleDelete(p)} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 6, padding: "5px 12px", fontSize: 12, color: C.red, cursor: "pointer" }}>Archive</button>
+                  <button onClick={() => setConfirmTarget(p)} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 6, padding: "5px 12px", fontSize: 12, color: C.red, cursor: "pointer" }}>Archive</button>
                 </td>
               </tr>
             ))}
@@ -230,6 +237,16 @@ export default function AdminProductsPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {confirmTarget && (
+        <ConfirmModal
+          title={`Archive "${confirmTarget.name}"?`}
+          body="This will deactivate the product. Existing rate records are preserved."
+          confirmLabel="Archive"
+          onConfirm={() => handleDelete(confirmTarget)}
+          onCancel={() => setConfirmTarget(null)}
+        />
       )}
     </div>
   );

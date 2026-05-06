@@ -18,9 +18,9 @@ interface NavItem {
 
 const MAIN_NAV: NavItem[] = [
   { href: "/dashboard/rates",   label: "Rate Database",   icon: "◎" },
-  { href: "/dashboard/screener",label: "Screener",        icon: "◈", badge: "Coming Soon", dim: true },
-  { href: "/dashboard/compare", label: "Compare",         icon: "⊞", badge: "Coming Soon", dim: true },
-  { href: "/dashboard/ai",      label: "AI Assistant",    icon: "◉", badge: "Phase 4",     dim: true },
+  { href: "/dashboard/screener",label: "MYGA Screener",   icon: "◈" },
+  { href: "/dashboard/compare", label: "Compare",         icon: "⊞" },
+  { href: "/dashboard/ai",      label: "AI Assistant",    icon: "◉", badge: "Phase 4", dim: true },
 ];
 
 const ADMIN_NAV: NavItem[] = [

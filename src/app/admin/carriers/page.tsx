@@ -2,20 +2,23 @@
 
 import { useState, useEffect } from "react";
 import { C } from "@/lib/tokens";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { useAdminToast } from "@/components/ui/AdminToast";
 import type { Carrier } from "@/lib/types";
 
-const AM_BEST = ["A++", "A+", "A", "A-", "B++", "B+", "B", "B-"];
+const AM_BEST   = ["A++", "A+", "A", "A-", "B++", "B+", "B", "B-"];
 const US_STATES = ["All","AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"];
-
 const emptyForm = { name: "", am_best_rating: "", sp_rating: "", moodys_rating: "", states_available: ["All"] };
 
 export default function AdminCarriersPage() {
-  const [carriers, setCarriers]   = useState<Carrier[]>([]);
-  const [editing, setEditing]     = useState<Carrier | null>(null);
-  const [form, setForm]           = useState(emptyForm);
-  const [showForm, setShowForm]   = useState(false);
-  const [saving, setSaving]       = useState(false);
-  const [error, setError]         = useState("");
+  const { toast } = useAdminToast();
+  const [carriers, setCarriers]           = useState<Carrier[]>([]);
+  const [editing, setEditing]             = useState<Carrier | null>(null);
+  const [form, setForm]                   = useState(emptyForm);
+  const [showForm, setShowForm]           = useState(false);
+  const [saving, setSaving]               = useState(false);
+  const [error, setError]                 = useState("");
+  const [confirmTarget, setConfirmTarget] = useState<Carrier | null>(null);
 
   const load = () => fetch("/api/carriers").then(r => r.json()).then(setCarriers);
   useEffect(() => { load(); }, []);
@@ -31,21 +34,22 @@ export default function AdminCarriersPage() {
     e.preventDefault();
     if (!form.name.trim()) { setError("Carrier name is required."); return; }
     setSaving(true); setError("");
-
-    const body = { ...form, states_available: form.states_available.length ? form.states_available : ["All"] };
-    const url = editing ? `/api/carriers/${editing.id}` : "/api/carriers";
+    const body   = { ...form, states_available: form.states_available.length ? form.states_available : ["All"] };
+    const url    = editing ? `/api/carriers/${editing.id}` : "/api/carriers";
     const method = editing ? "PATCH" : "POST";
-
-    const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    const data = await res.json();
+    const res    = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const data   = await res.json();
     setSaving(false);
-    if (!res.ok) { setError(data.error ?? "Save failed"); return; }
-    setShowForm(false); load();
+    if (!res.ok) { setError(data.error ?? "Save failed"); toast(data.error ?? "Save failed", "error"); return; }
+    setShowForm(false);
+    toast(editing ? `Carrier updated — ${form.name}` : `Carrier added — ${form.name}`);
+    load();
   }
 
   async function handleDelete(c: Carrier) {
-    if (!confirm(`Archive carrier "${c.name}"? Their products will also be deactivated.`)) return;
     await fetch(`/api/carriers/${c.id}`, { method: "DELETE" });
+    setConfirmTarget(null);
+    toast(`Carrier archived — ${c.name}`);
     load();
   }
 
@@ -59,12 +63,11 @@ export default function AdminCarriersPage() {
           <h1 style={{ color: C.navy, fontSize: 24, fontWeight: 800, letterSpacing: "-0.03em", margin: 0 }}>Carriers</h1>
           <p style={{ color: C.textMid, fontSize: 13, marginTop: 4 }}>{carriers.length} active carrier{carriers.length !== 1 ? "s" : ""}</p>
         </div>
-        <button onClick={openNew} style={{ padding: "10px 20px", background: C.blue, border: "none", borderRadius: 9, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+        <button onClick={openNew} style={{ padding: "10px 20px", background: C.teal, border: "none", borderRadius: 9, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
           + Add Carrier
         </button>
       </div>
 
-      {/* Carrier list */}
       <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
@@ -76,13 +79,17 @@ export default function AdminCarriersPage() {
           </thead>
           <tbody>
             {carriers.length === 0 && (
-              <tr><td colSpan={6} style={{ padding: 40, textAlign: "center", color: C.textDim }}>No carriers yet.</td></tr>
+              <tr><td colSpan={6} style={{ padding: 40, textAlign: "center", color: C.textDim }}>No carriers yet. Add your first carrier above.</td></tr>
             )}
             {carriers.map(c => (
-              <tr key={c.id} style={{ borderBottom: `1px solid ${C.border}` }}>
+              <tr key={c.id} style={{ borderBottom: `1px solid ${C.border}` }}
+                onMouseEnter={e => (e.currentTarget.style.background = C.surfaceHi)}
+                onMouseLeave={e => (e.currentTarget.style.background = "")}>
                 <td style={{ padding: "12px 16px", fontWeight: 600, color: C.text }}>{c.name}</td>
                 <td style={{ padding: "12px 16px" }}>
-                  {c.am_best_rating && <span style={{ background: C.greenDim, color: C.green, borderRadius: 5, padding: "2px 8px", fontSize: 11, fontWeight: 700 }}>{c.am_best_rating}</span>}
+                  {c.am_best_rating
+                    ? <span style={{ background: C.greenDim, color: C.green, borderRadius: 5, padding: "2px 8px", fontSize: 11, fontWeight: 700 }}>{c.am_best_rating}</span>
+                    : <span style={{ color: C.textDim }}>—</span>}
                 </td>
                 <td style={{ padding: "12px 16px", color: C.textMid, fontSize: 12 }}>{c.sp_rating ?? "—"}</td>
                 <td style={{ padding: "12px 16px", color: C.textMid, fontSize: 12 }}>{c.moodys_rating ?? "—"}</td>
@@ -91,7 +98,7 @@ export default function AdminCarriersPage() {
                 </td>
                 <td style={{ padding: "12px 16px", textAlign: "right" }}>
                   <button onClick={() => openEdit(c)} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 6, padding: "5px 12px", fontSize: 12, color: C.textMid, cursor: "pointer", marginRight: 6 }}>Edit</button>
-                  <button onClick={() => handleDelete(c)} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 6, padding: "5px 12px", fontSize: 12, color: C.red, cursor: "pointer" }}>Archive</button>
+                  <button onClick={() => setConfirmTarget(c)} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 6, padding: "5px 12px", fontSize: 12, color: C.red, cursor: "pointer" }}>Archive</button>
                 </td>
               </tr>
             ))}
@@ -99,12 +106,11 @@ export default function AdminCarriersPage() {
         </table>
       </div>
 
-      {/* Modal form */}
+      {/* Edit/Add modal */}
       {showForm && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(10,35,66,0.45)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ background: C.surface, borderRadius: 16, padding: 32, width: 480, maxHeight: "80vh", overflowY: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
             <h2 style={{ margin: "0 0 22px", fontSize: 17, fontWeight: 700, color: C.navy }}>{editing ? "Edit Carrier" : "Add Carrier"}</h2>
-
             <form onSubmit={handleSave}>
               <div style={{ marginBottom: 14 }}>
                 <label style={labelStyle}>CARRIER NAME *</label>
@@ -133,35 +139,42 @@ export default function AdminCarriersPage() {
                   {US_STATES.map(s => {
                     const checked = form.states_available.includes(s);
                     return (
-                      <label key={s} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, cursor: "pointer", color: checked ? C.blue : C.textMid }}>
+                      <label key={s} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, cursor: "pointer", color: checked ? C.teal : C.textMid }}>
                         <input type="checkbox" checked={checked} onChange={e => {
                           if (s === "All" && e.target.checked) { setForm(f => ({ ...f, states_available: ["All"] })); return; }
                           setForm(f => {
-                            let next = e.target.checked
-                              ? [...f.states_available.filter(x => x !== "All"), s]
-                              : f.states_available.filter(x => x !== s);
+                            let next = e.target.checked ? [...f.states_available.filter(x => x !== "All"), s] : f.states_available.filter(x => x !== s);
                             if (next.length === 0) next = ["All"];
                             return { ...f, states_available: next };
                           });
-                        }} style={{ accentColor: C.blue }} />
+                        }} style={{ accentColor: C.teal }} />
                         {s}
                       </label>
                     );
                   })}
                 </div>
               </div>
-
               {error && <div style={{ background: C.redDim, color: C.red, borderRadius: 8, padding: "10px 14px", fontSize: 12, marginBottom: 14 }}>{error}</div>}
-
               <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
                 <button type="button" onClick={() => setShowForm(false)} style={{ padding: "10px 20px", background: C.surfaceHi, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, cursor: "pointer", color: C.textMid }}>Cancel</button>
-                <button type="submit" disabled={saving} style={{ padding: "10px 24px", background: saving ? C.border : C.blue, border: "none", borderRadius: 8, color: "#fff", fontSize: 13, fontWeight: 700, cursor: saving ? "not-allowed" : "pointer" }}>
+                <button type="submit" disabled={saving} style={{ padding: "10px 24px", background: saving ? C.border : C.teal, border: "none", borderRadius: 8, color: "#fff", fontSize: 13, fontWeight: 700, cursor: saving ? "not-allowed" : "pointer" }}>
                   {saving ? "Saving…" : "Save"}
                 </button>
               </div>
             </form>
           </div>
         </div>
+      )}
+
+      {/* Confirmation modal */}
+      {confirmTarget && (
+        <ConfirmModal
+          title={`Archive "${confirmTarget.name}"?`}
+          body="This will deactivate the carrier and all their associated products. This action can be reversed by an admin."
+          confirmLabel="Archive"
+          onConfirm={() => handleDelete(confirmTarget)}
+          onCancel={() => setConfirmTarget(null)}
+        />
       )}
     </div>
   );
