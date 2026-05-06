@@ -1,23 +1,15 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
 import "./globals.css";
-import SessionWrapper from "./SessionWrapper";
-
-const geist = Geist({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "YieldIntel",
-  description: "Advisor Platform",
+  title: "YieldIntel — Rate Intelligence for Annuity Producers",
+  description: "Compare live annuity rates from 100+ carriers. MYGA, FIA, RILA, SPIA, and DIA — all in one platform.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={geist.className}>
-        <SessionWrapper session={null}>
-          {children}
-        </SessionWrapper>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
