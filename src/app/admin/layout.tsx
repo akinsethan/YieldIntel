@@ -9,6 +9,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           { href: "/admin/carriers", label: "Carriers" },
           { href: "/admin/products", label: "Products" },
           { href: "/admin/rates",    label: "Rate Update" },
+          { href: "/admin/import",   label: "Bulk Import" },
         ].map(({ href, label }) => (
           <a key={href} href={href} style={{ color: "#94A3B8", fontSize: 13, padding: "0 16px", height: 52, display: "flex", alignItems: "center", textDecoration: "none" }}>
             {label}

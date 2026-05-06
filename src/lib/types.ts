@@ -26,6 +26,7 @@ export interface Product {
   surrender_schedule: number[] | null;
   renewal_type: "Declared Rate" | "Indexed Option" | "Par Rate" | null;
   notes: string | null;
+  buffer_rate: number | null;
   created_at: string;
   updated_at: string;
   carrier?: Carrier;

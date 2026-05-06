@@ -28,6 +28,7 @@ const STATIC_PAGES = {
   "admin-carriers": () => { if (typeof window !== "undefined") window.location.href = "/admin/carriers"; return null; },
   "admin-products": () => { if (typeof window !== "undefined") window.location.href = "/admin/products"; return null; },
   "admin-rates":    () => { if (typeof window !== "undefined") window.location.href = "/admin/rates"; return null; },
+  "admin-import":   () => { if (typeof window !== "undefined") window.location.href = "/admin/import"; return null; },
   admin:            () => { if (typeof window !== "undefined") window.location.href = "/admin/rates"; return null; },
 } as const;
 

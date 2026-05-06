@@ -6,7 +6,7 @@ import type { Carrier, Product, ProductType } from "@/lib/types";
 
 const PRODUCT_TYPES: ProductType[] = ["FIA", "MYGA", "RILA", "SPIA", "DIA"];
 const RENEWAL_TYPES = ["Declared Rate", "Indexed Option", "Par Rate"];
-const emptyForm = { carrier_id: "", name: "", type: "" as ProductType | "", surrender_years: "", min_premium: "", states_available: ["All"], bonus: "", mva: false, surrender_schedule: "", renewal_type: "Declared Rate", notes: "" };
+const emptyForm = { carrier_id: "", name: "", type: "" as ProductType | "", surrender_years: "", min_premium: "", states_available: ["All"], bonus: "", mva: false, surrender_schedule: "", renewal_type: "Declared Rate", notes: "", buffer_rate: "" };
 
 const TYPE_COLORS: Record<string, string> = {
   FIA: C.blue, MYGA: C.teal, RILA: C.purple, SPIA: C.green, DIA: C.amber,
@@ -45,6 +45,7 @@ export default function AdminProductsPage() {
       surrender_schedule: p.surrender_schedule?.join(", ") ?? "",
       renewal_type: p.renewal_type ?? "Declared Rate",
       notes: p.notes ?? "",
+      buffer_rate: p.buffer_rate != null ? String(p.buffer_rate) : "",
     });
     setShowForm(true); setError("");
   }
@@ -68,6 +69,7 @@ export default function AdminProductsPage() {
         : [],
       renewal_type:  form.renewal_type || "Declared Rate",
       notes:         form.notes || null,
+      buffer_rate:   form.buffer_rate ? parseFloat(form.buffer_rate) : 0,
     };
 
     const url    = editing ? `/api/products/${editing.id}` : "/api/products";
@@ -178,6 +180,14 @@ export default function AdminProductsPage() {
                   <input type="number" min="0" value={form.min_premium} onChange={e => setForm(f => ({ ...f, min_premium: e.target.value }))} style={inputStyle} placeholder="10000" />
                 </div>
               </div>
+
+              {/* RILA-specific fields */}
+              {form.type === "RILA" && (
+                <div style={{ marginBottom: 14 }}>
+                  <label style={labelStyle}>BUFFER RATE (%)</label>
+                  <input type="number" step="1" min="0" max="30" value={form.buffer_rate} onChange={e => setForm(f => ({ ...f, buffer_rate: e.target.value }))} style={inputStyle} placeholder="e.g. 10" />
+                </div>
+              )}
 
               {/* MYGA-specific fields */}
               {form.type === "MYGA" && (

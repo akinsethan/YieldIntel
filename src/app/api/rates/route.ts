@@ -31,6 +31,7 @@ export async function GET(req: NextRequest) {
         surrender_years,
         min_premium,
         states_available,
+        buffer_rate,
         carrier:carriers(id, name, am_best_rating, sp_rating)
       )
     `)

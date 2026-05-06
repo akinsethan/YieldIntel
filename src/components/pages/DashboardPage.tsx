@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { C } from "@/lib/tokens";
 import { MOCK_CLIENTS } from "@/lib/data";
@@ -10,6 +11,13 @@ import { SectionTitle } from "@/components/ui/SectionTitle";
 import { Pill } from "@/components/ui/Pill";
 import { CustomTooltip } from "@/components/ui/CustomTooltip";
 import type { MarketData, TreasuryData, NewsItem } from "@/app/api/market/route";
+
+interface StatsData {
+  carrierCount: number;
+  productCount: number;
+  rateCount: number;
+  lastUpdated: string | null;
+}
 
 const sparkData = [
   { m: "Jul", aum: 2.1 }, { m: "Aug", aum: 2.3 }, { m: "Sep", aum: 2.2 }, { m: "Oct", aum: 2.5 },
@@ -161,6 +169,15 @@ interface DashboardPageProps {
 
 export function DashboardPage({ market }: DashboardPageProps) {
   const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+  const [stats, setStats] = useState<StatsData | null>(null);
+
+  useEffect(() => {
+    fetch("/api/stats").then(r => r.json()).then(setStats).catch(() => {});
+  }, []);
+
+  const lastUpdatedLabel = stats?.lastUpdated
+    ? new Date(stats.lastUpdated).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    : "—";
 
   return (
     <div>
@@ -170,10 +187,10 @@ export function DashboardPage({ market }: DashboardPageProps) {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 24 }}>
-        <MetricCard label="Total Clients"     value="142"   sub="Active accounts"      change={8.3}   icon="👥" />
-        <MetricCard label="Assets Analyzed"   value="$3.4B" sub="All portfolios"        change={12.7}  icon="📊" />
-        <MetricCard label="Annuity Products"  value="10"    sub="Live in database"      change={2.1}   icon="🛡️" />
-        <MetricCard label="Avg. Return Proj." value="7.2%"  sub="Blended weighted avg"  change={-0.3}  icon="📈" />
+        <MetricCard label="Total Clients"     value={String(MOCK_CLIENTS.length)} sub="Active accounts"      change={8.3}  icon="👥" />
+        <MetricCard label="Annuity Products"  value={stats ? String(stats.productCount) : "…"} sub="Live in database"  icon="🛡️" />
+        <MetricCard label="Active Rates"      value={stats ? String(stats.rateCount)    : "…"} sub="Current rate rows" icon="📊" />
+        <MetricCard label="Last Rate Update"  value={lastUpdatedLabel} sub={stats ? `${stats.carrierCount} carriers` : "Loading…"} icon="🔄" />
       </div>
 
       {/* Rate environment — full width */}

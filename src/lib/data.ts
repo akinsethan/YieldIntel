@@ -46,5 +46,6 @@ export const NAV_ITEMS = [
     { id: "admin-carriers", label: "Carriers" },
     { id: "admin-products", label: "Products" },
     { id: "admin-rates",    label: "Rate Update" },
+    { id: "admin-import",   label: "Bulk Import" },
   ]},
 ];
