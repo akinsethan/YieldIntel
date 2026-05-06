@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import type { Metadata } from "next";
+import { DashboardPage } from "@/components/pages/DashboardPage";
 
-export default function DashboardRoot() {
-  redirect("/dashboard/rates");
-}
+export const metadata: Metadata = { title: "Dashboard — YieldIntel" };
+export default function DashboardHome() { return <DashboardPage />; }

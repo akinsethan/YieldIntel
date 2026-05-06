@@ -164,16 +164,20 @@ function LiveNewsFeed({ news }: { news: NewsItem[] }) {
 }
 
 interface DashboardPageProps {
-  market: MarketData | null;
+  market?: MarketData | null;
 }
 
-export function DashboardPage({ market }: DashboardPageProps) {
+export function DashboardPage({ market: marketProp }: DashboardPageProps) {
   const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
-  const [stats, setStats] = useState<StatsData | null>(null);
+  const [stats, setStats]   = useState<StatsData | null>(null);
+  const [market, setMarket] = useState<MarketData | null>(marketProp ?? null);
 
   useEffect(() => {
     fetch("/api/stats").then(r => r.json()).then(setStats).catch(() => {});
-  }, []);
+    if (!marketProp) {
+      fetch("/api/market").then(r => r.json()).then(setMarket).catch(() => {});
+    }
+  }, [marketProp]);
 
   const lastUpdatedLabel = stats?.lastUpdated
     ? new Date(stats.lastUpdated).toLocaleDateString("en-US", { month: "short", day: "numeric" })

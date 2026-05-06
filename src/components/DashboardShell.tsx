@@ -17,10 +17,13 @@ interface NavItem {
 }
 
 const MAIN_NAV: NavItem[] = [
-  { href: "/dashboard/rates",   label: "Rate Database",   icon: "◎" },
-  { href: "/dashboard/screener",label: "MYGA Screener",   icon: "◈" },
-  { href: "/dashboard/compare", label: "Compare",         icon: "⊞" },
-  { href: "/dashboard/ai",      label: "AI Assistant",    icon: "◉", badge: "Phase 4", dim: true },
+  { href: "/dashboard",          label: "Overview",        icon: "▦" },
+  { href: "/dashboard/rates",    label: "Rate Database",   icon: "◎" },
+  { href: "/dashboard/screener", label: "MYGA Screener",   icon: "◈" },
+  { href: "/dashboard/research", label: "FIA / RILA",      icon: "◇" },
+  { href: "/dashboard/compare",  label: "Compare",         icon: "⊞" },
+  { href: "/dashboard/rila",     label: "RILA Simulator",  icon: "◉" },
+  { href: "/dashboard/ai",       label: "AI Assistant",    icon: "✦", badge: "Phase 4", dim: true },
 ];
 
 const ADMIN_NAV: NavItem[] = [
@@ -28,11 +31,14 @@ const ADMIN_NAV: NavItem[] = [
   { href: "/admin/carriers", label: "Manage Carriers", icon: "◉" },
   { href: "/admin/products", label: "Manage Products", icon: "⊞" },
   { href: "/admin/import",   label: "Bulk Import",     icon: "↑" },
+  { href: "/admin/audit",    label: "Audit Log",       icon: "◌" },
 ];
 
 function NavLink({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
   const pathname = usePathname();
-  const active = pathname === item.href || pathname.startsWith(item.href + "/");
+  const active = item.href === "/dashboard"
+    ? pathname === "/dashboard"
+    : pathname === item.href || pathname.startsWith(item.href + "/");
 
   return (
     <Link
